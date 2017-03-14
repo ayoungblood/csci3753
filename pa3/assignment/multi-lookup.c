@@ -1,11 +1,11 @@
-/* engine.c
+/* multi-lookup.c
  * Main code for multi-threaded DNS resolution engine
  * Based on `pthread_hello.c` from PA3 assignment files
  * All error and debug messages are sent to stderr
  * Resolved results are the only thing sent to stdout
  */
 
-#include "engine.h"
+#include "multi-lookup.h"
 
 const int queueSize = 20;
 
@@ -15,8 +15,8 @@ int main(int argc, char *argv[]) {
     if (argc <= 1) {
         // No input files, warn and print usage
         fprintf(stderr,"No input files specified.\n");
-        fprintf("Usage:\n"
-                "  resolve file [...]\n");
+        fprintf(stderr,"Usage:\n"
+                       "  resolve file [...]\n");
         return 1; // return an error
     }
     // We have at least one input file

@@ -1,3 +1,6 @@
+# Build targets
+pa3/assignment/multi-lookup
+
 # Object files
 *.o
 *.ko

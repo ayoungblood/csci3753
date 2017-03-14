@@ -1,6 +1,6 @@
 # Makefile
 # Loosely based on https://stackoverflow.com/questions/1484817/how-do-i-make-a-simple-makefile-for-gcc-on-linux
-TARGET = resolve
+TARGET = multi-lookup
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -Wshadow -m64 -std=c11 -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
 # -Wall -Wextra -pedantic: stricter warnings
@@ -32,7 +32,7 @@ $(TARGET): $(OBJECTS)
 all: $(TARGET)
 
 test: all
-		./resolve ../input/*
+		./multi-lookup ../input/*
 
 clean:
 		-rm -f *.o
