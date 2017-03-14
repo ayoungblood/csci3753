@@ -32,7 +32,7 @@ $(TARGET): $(OBJECTS)
 all: $(TARGET)
 
 test: all
-		./multi-lookup ../input/*
+		./multi-lookup ../input/* ../output/output.txt
 
 clean:
 		-rm -f *.o
