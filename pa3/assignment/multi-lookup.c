@@ -2,7 +2,6 @@
  * Main code for multi-threaded DNS resolution engine
  * Based on `pthread_hello.c` from PA3 assignment files
  * All error and debug messages are sent to stderr
- * Resolved results are the only thing sent to stdout
  */
 
 #include "multi-lookup.h"
@@ -56,16 +55,36 @@ int main(int argc, char *argv[]) {
         fprintf(stderr,"Spawning requester thread %d\n", i);
         // Create the thread and make sure it was created, pass the filename
         rv = pthread_create(&(threads_rqr[i]), NULL, RequesterThreadAction, argv[i+1]);
-        if (rv){
+        if (rv) {
             fprintf(stderr,"Error: failed to create requester thread %d, rv = %d\n", i, rv);
             exit(EXIT_FAILURE);
         }
     }
+    // Create a resolver thread pool based on number of cores
+    // This is not entirely portable, but hopefully "portable enough"
+    const int NUM_THREADS_RLV = sysconf(_SC_NPROCESSORS_ONLN);
+    pthread_t threads_rlv[NUM_THREADS_RLV];
+    printf("Detected %d cores\n",NUM_THREADS_RLV);
+    for (i = 0; i < NUM_THREADS_RLV; ++i) {
+        fprintf(stderr,"Spawning resolver thread %d\n", i);
+        // Create the thread and make sure it was created, pass the file pointer
+        rv = pthread_create(&(threads_rlv[i]),NULL, ResolverThreadAction, outputfp);
+        if (rv) {
+            fprintf(stderr,"Error: failed to create resolver %d, rv = %d\n", i, rv);
+            exit(EXIT_FAILURE);
+        }
+    }
+
     // Wait for requester threads to finish
-    for (i = 0; i < NUM_THREADS_RQR; i++){
-           pthread_join(threads_rqr[i],NULL);
+    for (i = 0; i < NUM_THREADS_RQR; ++i) {
+        pthread_join(threads_rqr[i],NULL);
     }
     printf("All requester threads have finished, printing queue contents:\n");
+    // Wait for resolver threads to finish
+    for (i = 0; i < NUM_THREADS_RLV; ++i) {
+        pthread_join(threads_rlv[i],NULL);
+    }
+    printf("All resolver threads have finished.\n");
 
     fclose(outputfp);
     pthread_mutex_destroy(&queue_lock);
@@ -73,10 +92,35 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+// Run by each resolver thread.
+// Pulls from queue and writes to output file, exits when queue is empty
+void* ResolverThreadAction(void* fp) {
+    fprintf(stderr,"ResolverThreadAction\n");
+    char hostname[1025];
+    char* temp;
+    // Get hostnames from the queue and resolve them
+    pthread_mutex_lock(&queue_lock);
+    while (!queue_is_empty(&q)) {
+        // Get an element from the queue
+        if ((temp = queue_pop(&q)) == NULL) {
+            fprintf(stderr,"Failed to pop from queue. Thread halting.\n");
+            return NULL;
+        }
+        pthread_mutex_unlock(&queue_lock); // end of queue critical section
+        // Copy to local stack space and free
+        strcpy(hostname,temp);
+        free(temp);
+        printf("ResolverThread: %s\n",hostname);
+
+        pthread_mutex_lock(&queue_lock);
+    }
+    pthread_mutex_unlock(&queue_lock);
+}
+
 // Run by each requester thread.
 // Opens file, adds hostnames to queue, and exits
 void* RequesterThreadAction(void* file_name) {
-    fprintf(stderr,"RequesterThreadAction: %s\n",(char *)file_name);
+    fprintf(stderr,"RequesterThreadAction: %s\n",(char*)file_name);
     // Try to open the file
     FILE* fp = fopen((char*)file_name,"r");
     if (!fp) {

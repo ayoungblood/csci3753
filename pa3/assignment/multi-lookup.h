@@ -9,6 +9,5 @@
 
 #include "queue.h"
 
-//#define NUM_THREADS	5
 void* RequesterThreadAction(void* file_name);
-void* PrintHello(void* threadid);
+void* ResolverThreadAction(void* fp);
