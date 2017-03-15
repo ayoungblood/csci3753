@@ -110,7 +110,16 @@ void* ResolverThreadAction(void* fp) {
         // Copy to local stack space and free
         strcpy(hostname,temp);
         free(temp);
-        printf("ResolverThread: %s\n",hostname);
+        // Resolve the hostname
+        char firstipstr[INET6_ADDRSTRLEN];
+        if (dnslookup(hostname, firstipstr, sizeof(firstipstr)) == UTIL_FAILURE) {
+            fprintf(stderr, "dnslookup error: %s\n", hostname);
+            strncpy(firstipstr, "", sizeof(firstipstr));
+        }
+        // Lock the output file, add line to output file, and release
+        pthread_mutex_lock(&output_lock);
+        fprintf(fp, "%s,%s\n", hostname, firstipstr);
+        pthread_mutex_unlock(&output_lock);
 
         pthread_mutex_lock(&queue_lock);
     }

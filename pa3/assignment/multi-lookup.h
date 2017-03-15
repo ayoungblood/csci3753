@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "queue.h"
+#include "util.h"
 
 void* RequesterThreadAction(void* file_name);
 void* ResolverThreadAction(void* fp);
