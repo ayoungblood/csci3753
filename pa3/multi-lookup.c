@@ -1,4 +1,5 @@
 /* multi-lookup.c
+ * Akira Youngblood, 2017-03-15
  * Main code for multi-threaded DNS resolution engine
  * Based on `pthread_hello.c` from PA3 assignment files
  * All error and debug messages are sent to stderr

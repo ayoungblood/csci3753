@@ -1,4 +1,5 @@
 /* multi-lookup.h
+ * Akira Youngblood, 2017-03-15
  * For multi-threaded DNS resolution engine
  */
 

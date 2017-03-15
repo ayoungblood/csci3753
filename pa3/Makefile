@@ -32,16 +32,16 @@ $(TARGET): $(OBJECTS)
 all: $(TARGET)
 
 test: all
-		./multi-lookup ../input/* ../output/output.txt
+		./multi-lookup input/* output.txt
 
 test-big: all
-		./multi-lookup ../input-big/* ../output/output.txt
+		./multi-lookup input-big/* output.txt
 
 test-med: all
-		./multi-lookup ../input-med/* ../output/output.txt
+		./multi-lookup input-med/* output.txt
 
 clean:
 		-rm -f *.o
 		-rm -f $(TARGET)
-		-rm -f ../output/*
+		-rm -f output.txt
 		-rm -rf multi-lookup.dSYM
