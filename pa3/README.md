@@ -13,6 +13,8 @@ In order to build and run on Linux, a few small modifications to the makefile ar
 
 When the program is finished, the elapsed CPU time (from `clock()`, provided by `time.h`) is displayed, as well as the number of resolver threads and the queue size used.
 
+The program cannot be checked using Valgrind on a Mac because the Valgrind port on OS X has "issues". On Linux, Valgrind shows no leaked memory, although some memory may be left "still reachable", depending on the compiler and libraries used.
+
 #### Limits
 
 MAX_INPUT_FILES: The number of input files is unbounded, but due to architectural limitations stops being unlimited once the number of files exceeds INT_MAX less two.
