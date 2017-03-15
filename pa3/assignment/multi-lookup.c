@@ -86,6 +86,7 @@ int main(int argc, char *argv[]) {
     fclose(outputfp);
     pthread_mutex_destroy(&queue_lock);
     pthread_mutex_destroy(&output_lock);
+    queue_cleanup(&q);
     // Print benchmarking info
     clock_t toc = clock();
     printf("Elapsed: %f s (%d resolver threads, queue size: %d)\n", (double)(toc - tic)/CLOCKS_PER_SEC, NUM_THREADS_RLV, queueSize);
