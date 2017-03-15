@@ -2,6 +2,8 @@
  * Main code for multi-threaded DNS resolution engine
  * Based on `pthread_hello.c` from PA3 assignment files
  * All error and debug messages are sent to stderr
+ *
+ * Uses queue.c/.h and util.c/.h from the PA3 files, unmodified
  */
 
 #include "multi-lookup.h"
@@ -10,7 +12,7 @@
 const int threadsPerCore = 4;
 
 // Global queue
-const int queueSize = 20;
+const int queueSize = 32; // Size doesn't seem to change much in benchmarking
 queue q;
 // Global output file
 FILE* outputfp = NULL;
@@ -60,7 +62,7 @@ int main(int argc, char *argv[]) {
     // Create a resolver thread pool based on number of cores
     // This is not entirely portable, but hopefully "portable enough"
     const int NUM_CORES = sysconf(_SC_NPROCESSORS_ONLN);
-    const int NUM_THREADS_RLV = 1; //threadsPerCore*NUM_CORES;
+    const int NUM_THREADS_RLV = threadsPerCore*NUM_CORES;
     pthread_t threads_rlv[NUM_THREADS_RLV];
     fprintf(stderr, "Detected %d cores, using %d threads\n",NUM_CORES,NUM_THREADS_RLV);
     for (i = 0; i < NUM_THREADS_RLV; ++i) {
@@ -86,7 +88,7 @@ int main(int argc, char *argv[]) {
     pthread_mutex_destroy(&output_lock);
     // Print benchmarking info
     clock_t toc = clock();
-    printf("Elapsed: %f s (%d threads)\n", (double)(toc - tic)/CLOCKS_PER_SEC, NUM_THREADS_RLV);
+    printf("Elapsed: %f s (%d resolver threads, queue size: %d)\n", (double)(toc - tic)/CLOCKS_PER_SEC, NUM_THREADS_RLV, queueSize);
     return 0;
 }
 
