@@ -9,7 +9,7 @@ This project is set up to build and run on OS X. To build and run with the cours
 In order to build and run on Linux, a few small modifications to the makefile are in order:
 
 * Add `-pthread` to `LIBS` (clang warns about an unused argument on OS X)
-* Remove all flags except for `-Wall -Wextra` from `CFLAGS` (due to issues in `util.c/.h`, `-std=c11` will throw warnings and errors)
+* Remove all flags except for `-Wall -Wextra` from `CFLAGS` (due to issues in `util.c/.h`, `-std=c11` will throw warnings and errors on Linux)
 
 When the program is finished, the elapsed CPU time (from `clock()`, provided by `time.h`) is displayed, as well as the number of resolver threads and the queue size used.
 
@@ -27,7 +27,7 @@ MAX_IP_LENGTH: INET6_ADDRSTRLEN. This program only does IPv4, and therefore this
 
 #### Benchmark Results
 
-Using `input-med` test file group on rMBP (2.6 GHz i5). `queueSize = 20`.
+Using `input-med` test file group on rMBP (2.6 GHz i5, four logical cores). Queue size: 32.
 
 | Threads | Run 1 | Run 2 | Run 3 | Avg   |
 |--------:|------:|------:|------:|------:|
@@ -40,15 +40,15 @@ Using `input-med` test file group on rMBP (2.6 GHz i5). `queueSize = 20`.
 | 64      | 0.66  | 0.53  | 0.51  | 0.56  |
 | 128     | 0.45  | 0.74  | 0.54  | 0.57  |
 
-Using `input-big` test file group on elra-02
+Using `input-big` test file group on elra-02 (2.6 GHz Xeon, four logical cores). Queue size: 32.
 
 | Threads | Run 1 | Run 2 |
 |--------:|------:|------:|
 | 4       | 33.02 | 30.86 |
-| 8       |
-| 16      |
-| 32      |
-| 64      |
-| 128     |
-| 256     |
-| 512     |
+| 8       | 3.08  | 2.12  |
+| 16      | 1.49  | 1.07  |
+| 32      | 0.99  | 1.06  |
+
+Unable to create more than 60 threads
+
+As name resolution is not CPU- or disk-bound, better performance with many more threads than cores makes sense: the resolver threads spend most of their time waiting on network I/O, and therefore do not require the CPU during this interval. As a result, four or eight times as many threads as there are cores allows the OS to schedule threads at a higher efficiency.
