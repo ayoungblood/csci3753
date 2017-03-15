@@ -6,6 +6,9 @@
 
 #include "multi-lookup.h"
 
+// Ratio of threads per core
+const int threadsPerCore = 4;
+
 // Global queue
 const int queueSize = 20;
 queue q;
@@ -16,6 +19,7 @@ pthread_mutex_t queue_lock, output_lock;
 
 int main(int argc, char *argv[]) {
     int i, rv;
+    clock_t tic = clock();
     // Parse command-line arguments
     if (argc <= 2) {
         // Need at least two file names (in and out), warn and print usage
@@ -25,12 +29,6 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
     // We have at least one input file and an output file
-    /* DEBUG */
-    for (i = 1; i < argc-1; ++i) {
-        printf("Input file: %s\n",argv[i]);
-    }
-    printf("Output file: %s\n",argv[argc-1]);
-    /* END DEBUG */
     // Open the output file
     outputfp = fopen(argv[argc-1],"w");
     if (!outputfp) {
@@ -52,7 +50,6 @@ int main(int argc, char *argv[]) {
     const int NUM_THREADS_RQR = argc-2;
     pthread_t threads_rqr[NUM_THREADS_RQR];
     for (i = 0; i < NUM_THREADS_RQR; ++i) {
-        fprintf(stderr,"Spawning requester thread %d\n", i);
         // Create the thread and make sure it was created, pass the filename
         rv = pthread_create(&(threads_rqr[i]), NULL, RequesterThreadAction, argv[i+1]);
         if (rv) {
@@ -62,11 +59,11 @@ int main(int argc, char *argv[]) {
     }
     // Create a resolver thread pool based on number of cores
     // This is not entirely portable, but hopefully "portable enough"
-    const int NUM_THREADS_RLV = sysconf(_SC_NPROCESSORS_ONLN);
+    const int NUM_CORES = sysconf(_SC_NPROCESSORS_ONLN);
+    const int NUM_THREADS_RLV = 1; //threadsPerCore*NUM_CORES;
     pthread_t threads_rlv[NUM_THREADS_RLV];
-    printf("Detected %d cores\n",NUM_THREADS_RLV);
+    fprintf(stderr, "Detected %d cores, using %d threads\n",NUM_CORES,NUM_THREADS_RLV);
     for (i = 0; i < NUM_THREADS_RLV; ++i) {
-        fprintf(stderr,"Spawning resolver thread %d\n", i);
         // Create the thread and make sure it was created, pass the file pointer
         rv = pthread_create(&(threads_rlv[i]),NULL, ResolverThreadAction, outputfp);
         if (rv) {
@@ -79,23 +76,23 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < NUM_THREADS_RQR; ++i) {
         pthread_join(threads_rqr[i],NULL);
     }
-    printf("All requester threads have finished, printing queue contents:\n");
     // Wait for resolver threads to finish
     for (i = 0; i < NUM_THREADS_RLV; ++i) {
         pthread_join(threads_rlv[i],NULL);
     }
-    printf("All resolver threads have finished.\n");
-
+    // We are done, close the output file and clean up
     fclose(outputfp);
     pthread_mutex_destroy(&queue_lock);
     pthread_mutex_destroy(&output_lock);
+    // Print benchmarking info
+    clock_t toc = clock();
+    printf("Elapsed: %f s (%d threads)\n", (double)(toc - tic)/CLOCKS_PER_SEC, NUM_THREADS_RLV);
     return 0;
 }
 
 // Run by each resolver thread.
 // Pulls from queue and writes to output file, exits when queue is empty
 void* ResolverThreadAction(void* fp) {
-    fprintf(stderr,"ResolverThreadAction\n");
     char hostname[1025];
     char* temp;
     // Get hostnames from the queue and resolve them
@@ -124,12 +121,12 @@ void* ResolverThreadAction(void* fp) {
         pthread_mutex_lock(&queue_lock);
     }
     pthread_mutex_unlock(&queue_lock);
+    return NULL;
 }
 
 // Run by each requester thread.
 // Opens file, adds hostnames to queue, and exits
 void* RequesterThreadAction(void* file_name) {
-    fprintf(stderr,"RequesterThreadAction: %s\n",(char*)file_name);
     // Try to open the file
     FILE* fp = fopen((char*)file_name,"r");
     if (!fp) {

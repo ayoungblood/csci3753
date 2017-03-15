@@ -32,8 +32,10 @@ $(TARGET): $(OBJECTS)
 all: $(TARGET)
 
 test: all
-		./multi-lookup ../input/* ../output/output.txt
+		./multi-lookup ../input-med/* ../output/output.txt
 
 clean:
 		-rm -f *.o
 		-rm -f $(TARGET)
+		-rm -f ../output/*
+		-rm -rf multi-lookup.dSYM
