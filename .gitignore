@@ -1,8 +1,8 @@
 # Build targets
-pa3/assignment/multi-lookup
+pa3/multi-lookup
 
 # Output files
-pa3/output/*
+pa3/output.txt
 
 # Object files
 *.o
