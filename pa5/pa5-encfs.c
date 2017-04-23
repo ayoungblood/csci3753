@@ -54,7 +54,7 @@ struct fuse_data {
     char *mirror_directory;
 };
 /* Macro to get fuse data */
-#define FUSE_DATA ((struct fuse_state*) fuse_get_context()->private_data)
+#define FUSE_DATA ((struct fuse_data*) fuse_get_context()->private_data)
 
 // ANSI colour escapes
 #define ANSI_C_BLACK        "\x1b[1;30m"
@@ -74,10 +74,10 @@ struct fuse_data {
 /* Takes a path and transforms it based on the mirror directory */
 char *get_mirror_path(const char *path) {
     char *rv;
-    int slen = strlen(path) + strlen(FUSE_DATA->mirror_dir) + 1;
+    int slen = strlen(path) + strlen(FUSE_DATA->mirror_directory) + 1;
     rv = malloc(sizeof(char) * slen);
     if (rv == NULL) return NULL;
-    strncpy(rv, ENC_PARAMS->dir, slen);
+    strncpy(rv, FUSE_DATA->mirror_directory, slen);
     strncat(rv, path, slen);
     printf("get_mirror_path: %s\n",rv);
     return rv;
@@ -209,7 +209,8 @@ static int xmp_symlink(const char *from, const char *to) {
 }
 
 static int xmp_rename(const char *from, const char *to) {
-    printf("xmp_rename: %s\n",path);
+    printf("xmp_rename, from: %s\n",from);
+	printf("xmp_rename, to: %s\n",to);
     int res;
 
     res = rename(from, to);
@@ -220,7 +221,8 @@ static int xmp_rename(const char *from, const char *to) {
 }
 
 static int xmp_link(const char *from, const char *to) {
-    printf("xmp_link: %s\n",path);
+	printf("xmp_link, from: %s\n",from);
+	printf("xmp_link, to: %s\n",to);
     int res;
 
     res = link(from, to);
@@ -440,8 +442,6 @@ static struct fuse_operations xmp_oper = {
 };
 
 int main(int argc, char *argv[]) {
-    char keyPhrase[KEY_PHRASE_MAX_LEN+1];
-    char mirrorDirectoryPathString[PATH_MAX + 1];
     umask(0);
     // Make sure we have enough arguments
     if ((argc < 4) || (argv[argc-3][0] == '-') || (argv[argc-2][0] == '-') || (argv[argc-1][0] == '-')) {
