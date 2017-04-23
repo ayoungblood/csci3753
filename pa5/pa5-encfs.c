@@ -59,21 +59,6 @@ struct fuse_data {
 /* XATTR name */
 #define XATTR_ENCRYPTED "user.pa5-encfs.encrypted"
 
-// ANSI colour escapes
-#define ANSI_C_BLACK        "\x1b[1;30m"
-#define ANSI_C_RED          "\x1b[1;31m"
-#define ANSI_C_YELLOW       "\x1b[1;33m"
-#define ANSI_C_GREEN        "\x1b[1;32m"
-#define ANSI_C_CYAN         "\x1b[1;36m"
-#define ANSI_C_BLUE         "\x1b[1;34m"
-#define ANSI_C_MAGENTA      "\x1b[1;35m"
-#define ANSI_C_WHITE        "\x1b[1;37m"
-#define ANSI_RESET          "\x1b[0m"
-#define ANSI_BOLD           "\x1b[1m"
-#define ANSI_UNDER          "\x1b[4m"
-
-#define KEY_PHRASE_MAX_LEN  80
-
 /* Takes a path and transforms it based on the mirror directory */
 char *get_mirror_path(const char *path) {
     char *rv;
@@ -583,7 +568,7 @@ int main(int argc, char *argv[]) {
         --argc;
     } else {
         perror("realpath");
-        fprintf(stderr, ANSI_C_RED "You lied to me when you told me this was a directory.\n" ANSI_RESET);
+        fprintf(stderr, "You lied to me when you told me this was a directory.\n");
         return 1;
     }
     // Yank key phrase
