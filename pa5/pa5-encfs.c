@@ -325,14 +325,14 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
     }
     // Decrypt if necessary
     if (1) { // File is encrypted
-		fprintf(stderr, "xmp_read: File is encrypted, decrypting to temp\n");
+        fprintf(stderr, "xmp_read: File is encrypted, decrypting to temp\n");
         // Decrypt the file to a tempfile
         if (FAILURE == do_crypt(fp, tp, 0, FUSE_DATA->key_phrase)) {
             fprintf(stderr, "xmp_read: Failed to decrypt %s\n",mpath);
             return -errno;
         }
     } else { // File is not encrypted
-		fprintf(stderr, "xmp_read: File is not encrypted, passthrough to temp\n");
+        fprintf(stderr, "xmp_read: File is not encrypted, passthrough to temp\n");
         // Passthrough the file to a tempfile
         if (FAILURE == do_crypt(fp, tp, -1, FUSE_DATA->key_phrase)) {
             fprintf(stderr, "xmp_read: Failed to passthrough %s\n",mpath);
@@ -376,7 +376,7 @@ static int xmp_write(const char *path, const char *buf, size_t size,
     // Decrypt if necessary (see https://www.cs.nmsu.edu/~pfeiffer/fuse-tutorial/))
     if (size > 0) {
         if (1) { // File is encrypted
-			fprintf(stderr, "xmp_write: File is encrypted, decrypting to temp\n");
+            fprintf(stderr, "xmp_write: File is encrypted, decrypting to temp\n");
             // Decrypt the file to a tempfile
             if (FAILURE == do_crypt(fp, tp, 0, FUSE_DATA->key_phrase)) {
                 fprintf(stderr, "xmp_write: Failed to decrypt %s\n",mpath);
@@ -385,8 +385,8 @@ static int xmp_write(const char *path, const char *buf, size_t size,
             rewind(fp);
             rewind(tp);
         } else { // File is not encrypted
-			fprintf(stderr, "xmp_write: File is not encrypted, do_crypt passthrough\n");
-			// Passthrough the file to a tempfile
+            fprintf(stderr, "xmp_write: File is not encrypted, do_crypt passthrough\n");
+            // Passthrough the file to a tempfile
             if (FAILURE == do_crypt(fp, tp, -1, FUSE_DATA->key_phrase)) {
                 fprintf(stderr, "xmp_write: Failed to passthrough %s\n",mpath);
                 return -errno;
@@ -401,16 +401,16 @@ static int xmp_write(const char *path, const char *buf, size_t size,
         res = -errno;
     // Encrypt if necessary
     if (1) { // File is encrypted
-		fprintf(stderr, "xmp_write: File was encrypted, re-encrypting from temp\n");
+        fprintf(stderr, "xmp_write: File was encrypted, re-encrypting from temp\n");
         // Encrypt the temp file to the actual file
         if (FAILURE == do_crypt(tp, fp, 1, FUSE_DATA->key_phrase)) {
             fprintf(stderr, "xmp_write: Failed to encrypt %s\n",mpath);
             return -errno;
         }
     } else { // File is not encrypted
-		fprintf(stderr, "xmp_write: File was not encrypted, do_crypt passthrough\n");
-		// Passthrough the tempfile to file
-		if (FAILURE == do_crypt(tp, fp, -1, FUSE_DATA->key_phrase)) {
+        fprintf(stderr, "xmp_write: File was not encrypted, do_crypt passthrough\n");
+        // Passthrough the tempfile to file
+        if (FAILURE == do_crypt(tp, fp, -1, FUSE_DATA->key_phrase)) {
             fprintf(stderr, "xmp_write: Failed to passthrough %s\n",mpath);
             return -errno;
         }
@@ -447,7 +447,13 @@ static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) 
         return -errno;
     }
     fprintf(stderr, "xmp_create: Encrypted %s\n",mpath);
-	// Clean up
+    // Add xattr
+    if (-1 == setxattr(mpath, XATTR_ENCRYPTED, "true ", 6, 0)){
+        fprintf(stderr, "xmp_create: Failed to set xattr % on %s\n", XATTR_ENCRYPTED, mpath);
+        return -errno;
+    }
+    fprintf(stderr, "xmp_create: Set xattr %s on %s\n", XATTR_ENCRYPTED, mpath);
+    // Clean up
     fclose(fp);
     free(mpath);
     return 0;
