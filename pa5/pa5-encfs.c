@@ -42,6 +42,8 @@
 #include <dirent.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <limits.h> // MAX_PATH
+#include <stdlib.h>
 #ifdef HAVE_SETXATTR
 #include <sys/xattr.h>
 #endif
@@ -397,7 +399,6 @@ static struct fuse_operations xmp_oper = {
 int main(int argc, char *argv[]) {
     char keyPhrase[KEY_PHRASE_MAX_LEN+1];
     char mirrorDirectoryPathString[PATH_MAX + 1];
-    char *rv;
     umask(0);
     // Make sure we have enough arguments
     if ((argc < 4) || (argv[argc-3][0] == '-') || (argv[argc-2][0] == '-') || (argv[argc-1][0] == '-')) {
@@ -406,7 +407,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
     // Yank mirror directory
-    if ((rv = realpath(argv[argc-2], mirrorDirectoryPathString))) {
+    if (realpath(argv[argc-2], mirrorDirectoryPathString)) {
         printf("Mirror directory: %s\n", mirrorDirectoryPathString);
         argv[argc-2] = argv[argc-1];
         argv[argc-1] = NULL;
