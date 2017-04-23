@@ -79,56 +79,58 @@ char *get_mirror_path(const char *path) {
     if (rv == NULL) return NULL;
     strncpy(rv, FUSE_DATA->mirror_directory, slen);
     strncat(rv, path, slen);
-    printf("get_mirror_path: %s\n",rv);
+    //printf("get_mirror_path: %s\n",rv);
     return rv;
 }
 
 static int xmp_getattr(const char *path, struct stat *stbuf) {
-    printf("xmp_getattr: %s\n",path);
     int res;
-
-    res = lstat(path, stbuf);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_getattr: %s\n",mpath);
+    res = lstat(mpath, stbuf);
     if (res == -1)
         return -errno;
 
+    free(mpath);
     return 0;
 }
 
 static int xmp_access(const char *path, int mask) {
-    printf("xmp_access: %s\n",path);
     int res;
-
-    res = access(path, mask);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_access: %s\n",mpath);
+    res = access(mpath, mask);
     if (res == -1)
         return -errno;
 
+    free(mpath);
     return 0;
 }
 
 static int xmp_readlink(const char *path, char *buf, size_t size) {
-    printf("xmp_readlink: %s\n",path);
-	get_mirror_path(path);
     int res;
-
-    res = readlink(path, buf, size - 1);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_readlink: %s\n",mpath);
+    res = readlink(mpath, buf, size - 1);
     if (res == -1)
         return -errno;
 
     buf[res] = '\0';
+    free(mpath);
     return 0;
 }
 
 
 static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                off_t offset, struct fuse_file_info *fi) {
-    printf("xmp_readdir: %s\n",path);
     DIR *dp;
     struct dirent *de;
-
     (void) offset;
     (void) fi;
 
-    dp = opendir(path);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_readdir: %s\n",mpath);
+    dp = opendir(mpath);
     if (dp == NULL)
         return -errno;
 
@@ -142,131 +144,148 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     }
 
     closedir(dp);
+    free(mpath);
     return 0;
 }
 
 static int xmp_mknod(const char *path, mode_t mode, dev_t rdev) {
-    printf("xmp_mknod: %s\n",path);
     int res;
-
+    char* mpath = get_mirror_path(path);
+    printf("xmp_mknod: %s\n",mpath);
     /* On Linux this could just be 'mknod(path, mode, rdev)' but this
        is more portable */
     if (S_ISREG(mode)) {
-        res = open(path, O_CREAT | O_EXCL | O_WRONLY, mode);
+        res = open(mpath, O_CREAT | O_EXCL | O_WRONLY, mode);
         if (res >= 0)
             res = close(res);
     } else if (S_ISFIFO(mode))
-        res = mkfifo(path, mode);
+        res = mkfifo(mpath, mode);
     else
-        res = mknod(path, mode, rdev);
+        res = mknod(mpath, mode, rdev);
     if (res == -1)
         return -errno;
-
+    free(mpath);
     return 0;
 }
 
 static int xmp_mkdir(const char *path, mode_t mode) {
-    printf("xmp_mkdir: %s\n",path);
     int res;
-
-    res = mkdir(path, mode);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_mkdir: %s\n",mpath);
+    res = mkdir(mpath, mode);
     if (res == -1)
         return -errno;
 
+    free(mpath);
     return 0;
 }
 
 static int xmp_unlink(const char *path) {
-    printf("xmp_unlink: %s\n",path);
     int res;
-
-    res = unlink(path);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_unlink: %s\n",mpath);
+    res = unlink(mpath);
     if (res == -1)
         return -errno;
 
+    free(mpath);
     return 0;
 }
 
 static int xmp_rmdir(const char *path) {
-    printf("xmp_rmdir: %s\n",path);
     int res;
-
-    res = rmdir(path);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_rmdir: %s\n",mpath);
+    res = rmdir(mpath);
     if (res == -1)
         return -errno;
 
+    free(mpath);
     return 0;
 }
 
 static int xmp_symlink(const char *from, const char *to) {
     int res;
-
-    res = symlink(from, to);
+    char* mfrom = get_mirror_path(from);
+    printf("xmp_symlink (from): %s\n",mfrom);
+    char* mto = get_mirror_path(to);
+    printf("xmp_symlink (to): %s\n",mto);
+    res = symlink(mfrom, mto);
     if (res == -1)
         return -errno;
 
+    free(mfrom);
+    free(mto);
     return 0;
 }
 
 static int xmp_rename(const char *from, const char *to) {
-    printf("xmp_rename, from: %s\n",from);
-	printf("xmp_rename, to: %s\n",to);
     int res;
-
+    char* mfrom = get_mirror_path(from);
+    printf("xmp_symlink (from): %s\n",mfrom);
+    char* mto = get_mirror_path(to);
+    printf("xmp_symlink (to): %s\n",mto);
     res = rename(from, to);
     if (res == -1)
         return -errno;
 
+    free(mfrom);
+    free(mto);
     return 0;
 }
 
 static int xmp_link(const char *from, const char *to) {
-	printf("xmp_link, from: %s\n",from);
-	printf("xmp_link, to: %s\n",to);
     int res;
-
+    char* mfrom = get_mirror_path(from);
+    printf("xmp_symlink (from): %s\n",mfrom);
+    char* mto = get_mirror_path(to);
+    printf("xmp_symlink (to): %s\n",mto);
     res = link(from, to);
     if (res == -1)
         return -errno;
 
+    free(mfrom);
+    free(mto);
     return 0;
 }
 
 static int xmp_chmod(const char *path, mode_t mode) {
-    printf("xmp_chmod: %s\n",path);
     int res;
-
-    res = chmod(path, mode);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_chmod: %s\n",mpath);
+    res = chmod(mpath, mode);
     if (res == -1)
         return -errno;
 
+    free(mpath);
     return 0;
 }
 
 static int xmp_chown(const char *path, uid_t uid, gid_t gid) {
-    printf("xmp_chown: %s\n",path);
     int res;
-
-    res = lchown(path, uid, gid);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_chown: %s\n",mpath);
+    res = lchown(mpath, uid, gid);
     if (res == -1)
         return -errno;
 
+    free(mpath);
     return 0;
 }
 
 static int xmp_truncate(const char *path, off_t size) {
-    printf("xmp_truncate: %s\n",path);
     int res;
-
-    res = truncate(path, size);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_truncate: %s\n",mpath);
+    res = truncate(mpath, size);
     if (res == -1)
         return -errno;
 
+    free(mpath);
     return 0;
 }
 
 static int xmp_utimens(const char *path, const struct timespec ts[2]) {
-    printf("xmp_utimens: %s\n",path);
     int res;
     struct timeval tv[2];
 
@@ -274,23 +293,26 @@ static int xmp_utimens(const char *path, const struct timespec ts[2]) {
     tv[0].tv_usec = ts[0].tv_nsec / 1000;
     tv[1].tv_sec = ts[1].tv_sec;
     tv[1].tv_usec = ts[1].tv_nsec / 1000;
-
-    res = utimes(path, tv);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_utimens: %s\n",mpath);
+    res = utimes(mpath, tv);
     if (res == -1)
         return -errno;
 
+    free(mpath);
     return 0;
 }
 
 static int xmp_open(const char *path, struct fuse_file_info *fi) {
-    printf("xmp_open: %s\n",path);
     int res;
-
-    res = open(path, fi->flags);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_open: %s\n",mpath);
+    res = open(mpath, fi->flags);
     if (res == -1)
         return -errno;
 
     close(res);
+    free(mpath);
     return 0;
 }
 
@@ -299,9 +321,10 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
     printf("xmp_read: %s\n",path);
     int fd;
     int res;
-
+    char* mpath = get_mirror_path(path);
+    printf("xmp_read: %s\n",mpath);
     (void) fi;
-    fd = open(path, O_RDONLY);
+    fd = open(mpath, O_RDONLY);
     if (fd == -1)
         return -errno;
 
@@ -310,17 +333,18 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
         res = -errno;
 
     close(fd);
+    free(mpath);
     return res;
 }
 
 static int xmp_write(const char *path, const char *buf, size_t size,
              off_t offset, struct fuse_file_info *fi) {
-    printf("xmp_read: %s\n",path);
     int fd;
     int res;
-
+    char* mpath = get_mirror_path(path);
+    printf("xmp_write: %s\n",mpath);
     (void) fi;
-    fd = open(path, O_WRONLY);
+    fd = open(mpath, O_WRONLY);
     if (fd == -1)
         return -errno;
 
@@ -329,31 +353,33 @@ static int xmp_write(const char *path, const char *buf, size_t size,
         res = -errno;
 
     close(fd);
+    free(mpath);
     return res;
 }
 
 static int xmp_statfs(const char *path, struct statvfs *stbuf) {
-    printf("xmp_read: %s\n",path);
     int res;
-
-    res = statvfs(path, stbuf);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_statfs: %s\n",mpath);
+    res = statvfs(mpath, stbuf);
     if (res == -1)
         return -errno;
 
+    free(mpath);
     return 0;
 }
 
 static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) {
-    printf("xmp_create: %s\n",path);
     (void) fi;
-
     int res;
-    res = creat(path, mode);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_create: %s\n",mpath);
+    res = creat(mpath, mode);
     if(res == -1)
     return -errno;
 
     close(res);
-
+    free(mpath);
     return 0;
 }
 
@@ -377,35 +403,43 @@ static int xmp_fsync(const char *path, int isdatasync,
 #ifdef HAVE_SETXATTR
 static int xmp_setxattr(const char *path, const char *name, const char *value,
             size_t size, int flags) {
-    printf("xmp_setxattr: %s\n",path);
-    int res = lsetxattr(path, name, value, size, flags);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_setxattr: %s\n",mpath);
+    int res = lsetxattr(mpath, name, value, size, flags);
     if (res == -1)
         return -errno;
+    free(mpath);
     return 0;
 }
 
 static int xmp_getxattr(const char *path, const char *name, char *value,
             size_t size) {
-    printf("xmp_getxattr: %s\n",path);
-    int res = lgetxattr(path, name, value, size);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_getxattr: %s\n",mpath);
+    int res = lgetxattr(mpath, name, value, size);
     if (res == -1)
         return -errno;
+    free(mpath);
     return res;
 }
 
 static int xmp_listxattr(const char *path, char *list, size_t size) {
-    printf("xmp_listxattr: %s\n",path);
-    int res = llistxattr(path, list, size);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_listxattr: %s\n",mpath);
+    int res = llistxattr(mpath, list, size);
     if (res == -1)
         return -errno;
+    free(mpath);
     return res;
 }
 
 static int xmp_removexattr(const char *path, const char *name) {
-    printf("xmp_removexattr: %s\n",path);
-    int res = lremovexattr(path, name);
+    char* mpath = get_mirror_path(path);
+    printf("xmp_removexattr: %s\n",mpath);
+    int res = lremovexattr(mpath, name);
     if (res == -1)
         return -errno;
+    free(mpath);
     return 0;
 }
 #endif /* HAVE_SETXATTR */
