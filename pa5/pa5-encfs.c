@@ -48,6 +48,14 @@
 #include <sys/xattr.h>
 #endif
 
+/* Struct to store custom data across fuse calls */
+struct fuse_data {
+    char *key_phrase;
+    char *mirror_directory;
+};
+/* Macro to get fuse data */
+#define FUSE_DATA ((struct fuse_state*) fuse_get_context()->private_data)
+
 // ANSI colour escapes
 #define ANSI_C_BLACK        "\x1b[1;30m"
 #define ANSI_C_RED          "\x1b[1;31m"
@@ -63,7 +71,20 @@
 
 #define KEY_PHRASE_MAX_LEN  80
 
+/* Takes a path and transforms it based on the mirror directory */
+char *get_mirror_path(const char *path) {
+    char *rv;
+    int slen = strlen(path) + strlen(FUSE_DATA->mirror_dir) + 1;
+    rv = malloc(sizeof(char) * slen);
+    if (rv == NULL) return NULL;
+    strncpy(rv, ENC_PARAMS->dir, slen);
+    strncat(rv, path, slen);
+    printf("get_mirror_path: %s\n",rv);
+    return rv;
+}
+
 static int xmp_getattr(const char *path, struct stat *stbuf) {
+    printf("xmp_getattr: %s\n",path);
     int res;
 
     res = lstat(path, stbuf);
@@ -74,6 +95,7 @@ static int xmp_getattr(const char *path, struct stat *stbuf) {
 }
 
 static int xmp_access(const char *path, int mask) {
+    printf("xmp_access: %s\n",path);
     int res;
 
     res = access(path, mask);
@@ -84,6 +106,8 @@ static int xmp_access(const char *path, int mask) {
 }
 
 static int xmp_readlink(const char *path, char *buf, size_t size) {
+    printf("xmp_readlink: %s\n",path);
+	get_mirror_path(path);
     int res;
 
     res = readlink(path, buf, size - 1);
@@ -97,6 +121,7 @@ static int xmp_readlink(const char *path, char *buf, size_t size) {
 
 static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                off_t offset, struct fuse_file_info *fi) {
+    printf("xmp_readdir: %s\n",path);
     DIR *dp;
     struct dirent *de;
 
@@ -121,6 +146,7 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 }
 
 static int xmp_mknod(const char *path, mode_t mode, dev_t rdev) {
+    printf("xmp_mknod: %s\n",path);
     int res;
 
     /* On Linux this could just be 'mknod(path, mode, rdev)' but this
@@ -140,6 +166,7 @@ static int xmp_mknod(const char *path, mode_t mode, dev_t rdev) {
 }
 
 static int xmp_mkdir(const char *path, mode_t mode) {
+    printf("xmp_mkdir: %s\n",path);
     int res;
 
     res = mkdir(path, mode);
@@ -150,6 +177,7 @@ static int xmp_mkdir(const char *path, mode_t mode) {
 }
 
 static int xmp_unlink(const char *path) {
+    printf("xmp_unlink: %s\n",path);
     int res;
 
     res = unlink(path);
@@ -160,6 +188,7 @@ static int xmp_unlink(const char *path) {
 }
 
 static int xmp_rmdir(const char *path) {
+    printf("xmp_rmdir: %s\n",path);
     int res;
 
     res = rmdir(path);
@@ -180,6 +209,7 @@ static int xmp_symlink(const char *from, const char *to) {
 }
 
 static int xmp_rename(const char *from, const char *to) {
+    printf("xmp_rename: %s\n",path);
     int res;
 
     res = rename(from, to);
@@ -190,6 +220,7 @@ static int xmp_rename(const char *from, const char *to) {
 }
 
 static int xmp_link(const char *from, const char *to) {
+    printf("xmp_link: %s\n",path);
     int res;
 
     res = link(from, to);
@@ -200,6 +231,7 @@ static int xmp_link(const char *from, const char *to) {
 }
 
 static int xmp_chmod(const char *path, mode_t mode) {
+    printf("xmp_chmod: %s\n",path);
     int res;
 
     res = chmod(path, mode);
@@ -210,6 +242,7 @@ static int xmp_chmod(const char *path, mode_t mode) {
 }
 
 static int xmp_chown(const char *path, uid_t uid, gid_t gid) {
+    printf("xmp_chown: %s\n",path);
     int res;
 
     res = lchown(path, uid, gid);
@@ -220,6 +253,7 @@ static int xmp_chown(const char *path, uid_t uid, gid_t gid) {
 }
 
 static int xmp_truncate(const char *path, off_t size) {
+    printf("xmp_truncate: %s\n",path);
     int res;
 
     res = truncate(path, size);
@@ -230,6 +264,7 @@ static int xmp_truncate(const char *path, off_t size) {
 }
 
 static int xmp_utimens(const char *path, const struct timespec ts[2]) {
+    printf("xmp_utimens: %s\n",path);
     int res;
     struct timeval tv[2];
 
@@ -246,6 +281,7 @@ static int xmp_utimens(const char *path, const struct timespec ts[2]) {
 }
 
 static int xmp_open(const char *path, struct fuse_file_info *fi) {
+    printf("xmp_open: %s\n",path);
     int res;
 
     res = open(path, fi->flags);
@@ -258,6 +294,7 @@ static int xmp_open(const char *path, struct fuse_file_info *fi) {
 
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
             struct fuse_file_info *fi) {
+    printf("xmp_read: %s\n",path);
     int fd;
     int res;
 
@@ -276,6 +313,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 
 static int xmp_write(const char *path, const char *buf, size_t size,
              off_t offset, struct fuse_file_info *fi) {
+    printf("xmp_read: %s\n",path);
     int fd;
     int res;
 
@@ -293,6 +331,7 @@ static int xmp_write(const char *path, const char *buf, size_t size,
 }
 
 static int xmp_statfs(const char *path, struct statvfs *stbuf) {
+    printf("xmp_read: %s\n",path);
     int res;
 
     res = statvfs(path, stbuf);
@@ -303,7 +342,7 @@ static int xmp_statfs(const char *path, struct statvfs *stbuf) {
 }
 
 static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) {
-
+    printf("xmp_create: %s\n",path);
     (void) fi;
 
     int res;
@@ -336,6 +375,7 @@ static int xmp_fsync(const char *path, int isdatasync,
 #ifdef HAVE_SETXATTR
 static int xmp_setxattr(const char *path, const char *name, const char *value,
             size_t size, int flags) {
+    printf("xmp_setxattr: %s\n",path);
     int res = lsetxattr(path, name, value, size, flags);
     if (res == -1)
         return -errno;
@@ -344,6 +384,7 @@ static int xmp_setxattr(const char *path, const char *name, const char *value,
 
 static int xmp_getxattr(const char *path, const char *name, char *value,
             size_t size) {
+    printf("xmp_getxattr: %s\n",path);
     int res = lgetxattr(path, name, value, size);
     if (res == -1)
         return -errno;
@@ -351,6 +392,7 @@ static int xmp_getxattr(const char *path, const char *name, char *value,
 }
 
 static int xmp_listxattr(const char *path, char *list, size_t size) {
+    printf("xmp_listxattr: %s\n",path);
     int res = llistxattr(path, list, size);
     if (res == -1)
         return -errno;
@@ -358,6 +400,7 @@ static int xmp_listxattr(const char *path, char *list, size_t size) {
 }
 
 static int xmp_removexattr(const char *path, const char *name) {
+    printf("xmp_removexattr: %s\n",path);
     int res = lremovexattr(path, name);
     if (res == -1)
         return -errno;
@@ -403,29 +446,35 @@ int main(int argc, char *argv[]) {
     // Make sure we have enough arguments
     if ((argc < 4) || (argv[argc-3][0] == '-') || (argv[argc-2][0] == '-') || (argv[argc-1][0] == '-')) {
         printf("Usage:\n" \
-            "\tpa5-encfs <key phrase> <mirror directory> <mount point>\n");
+            "\tpa5-encfs <key phrase> <mirror directory> <mount point>\n\n");
         return 0;
     }
-    // Yank mirror directory
-    if (realpath(argv[argc-2], mirrorDirectoryPathString)) {
-        printf("Mirror directory: %s\n", mirrorDirectoryPathString);
+    // Initialize data struct
+    struct fuse_data *fuse_data;
+    fuse_data = malloc(sizeof(struct fuse_data));
+    if (fuse_data == NULL) {
+        printf("Failed to allocate memory. Exiting.\n");
+        return 1;
+    }
+    // Yank mirror directory (from J. J. Pfeiffer, https://www.cs.nmsu.edu/~pfeiffer/fuse-tutorial/)
+    if ((fuse_data->mirror_directory = realpath(argv[argc-2], NULL))) {
+        printf("Mirror directory: %s\n", fuse_data->mirror_directory);
         argv[argc-2] = argv[argc-1];
         argv[argc-1] = NULL;
         --argc;
     } else {
         perror("realpath");
         printf(ANSI_C_RED "You lied to me when you told me this was a directory.\n" ANSI_RESET);
-        return(1);
+        return 1;
     }
     // Yank key phrase
-    strncpy (keyPhrase, argv[argc-3], KEY_PHRASE_MAX_LEN);
-    printf("Key phrase: %s\n", keyPhrase);
-    keyPhrase[KEY_PHRASE_MAX_LEN] = '\0';
+    fuse_data->key_phrase = argv[argc-3];
+    printf("Key phrase: %s\n", fuse_data->key_phrase);
     argv[argc-2] = argv[argc-1];
     argv[argc-1] = NULL;
     --argc;
-    // Mount point should be left behind
+    // Mount point should be left behind as last arg
     printf("Mount point: %s\n", argv[argc-1]);
     // Call FUSE
-    return fuse_main(argc, argv, &xmp_oper, NULL);
+    return fuse_main(argc, argv, &xmp_oper, fuse_data);
 }
