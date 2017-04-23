@@ -322,7 +322,6 @@ static int xmp_open(const char *path, struct fuse_file_info *fi) {
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
             struct fuse_file_info *fi) {
     (void) fi;
-    int fd;
     int res;
     // Get the actual path
     char* mpath = get_mirror_path(path);
@@ -366,7 +365,6 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 static int xmp_write(const char *path, const char *buf, size_t size,
              off_t offset, struct fuse_file_info *fi) {
     (void) fi;
-    int fd;
     int res;
     // Get the actual path
     char* mpath = get_mirror_path(path);
@@ -392,8 +390,8 @@ static int xmp_write(const char *path, const char *buf, size_t size,
                 fprintf(stderr, "xmp_write: Failed to decrypt %s\n",mpath);
                 return -errno;
             }
-            rewind(file);
-            rewind(tempfile);
+            rewind(fp);
+            rewind(tp);
         } else { // File is not encrypted
 
         }
@@ -414,7 +412,7 @@ static int xmp_write(const char *path, const char *buf, size_t size,
     }
     // Clean up
     fclose(fp);
-    fclose(td);
+    fclose(tp);
     free(mpath);
     return res;
 }
@@ -433,6 +431,7 @@ static int xmp_statfs(const char *path, struct statvfs *stbuf) {
 
 static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) {
     (void) fi;
+    (void) mode;
     // Get the actual path
     char* mpath = get_mirror_path(path);
     printf("xmp_create: %s\n",mpath);
