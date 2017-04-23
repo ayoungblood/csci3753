@@ -17,13 +17,13 @@ LLIBSOPENSSL = -lcrypto
 CFLAGS = -c -g -Wall -Wextra
 LFLAGS = -g -Wall -Wextra
 
-FUSE_EXAMPLES = fusehello fusexmp 
+FUSE_EXAMPLES = fusehello fusexmp
 XATTR_EXAMPLES = xattr-util
-OPENSSL_EXAMPLES = aes-crypt-util 
+OPENSSL_EXAMPLES = aes-crypt-util
 
 .PHONY: all fuse-examples xattr-examples openssl-examples clean
 
-all: fuse-examples xattr-examples openssl-examples
+all: fuse-examples xattr-examples openssl-examples pa5-encfs
 
 fuse-examples: $(FUSE_EXAMPLES)
 xattr-examples: $(XATTR_EXAMPLES)
@@ -56,6 +56,13 @@ aes-crypt-util.o: aes-crypt-util.c aes-crypt.h
 aes-crypt.o: aes-crypt.c aes-crypt.h
 	$(CC) $(CFLAGS) $<
 
+## PA5 addition
+pa5-encfs: pa5-encfs.o
+		$(CC) $(LFLAGS) $^ -o $@ $(LLIBSFUSE)
+
+pa5-encfs.o: pa5-encfs.c
+		$(CC) $(CFLAGS) $(CFLAGSFUSE) $<
+
 clean:
 	rm -f $(FUSE_EXAMPLES)
 	rm -f $(XATTR_EXAMPLES)
@@ -66,6 +73,4 @@ clean:
 	rm -f handout/*.log
 	rm -f handout/*.aux
 	rm -f handout/*.out
-
-
-
+	rm -f pa5-encfs
