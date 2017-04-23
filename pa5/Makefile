@@ -58,7 +58,7 @@ aes-crypt.o: aes-crypt.c aes-crypt.h
 
 ## PA5 addition
 pa5-encfs: pa5-encfs.o aes-crypt.o
-		$(CC) $(LFLAGS) $^ -o $@ $(LLIBSFUSE)
+		$(CC) $(LFLAGS) $^ -o $@ $(LLIBSFUSE) $(LLIBSOPENSSL)
 
 pa5-encfs.o: pa5-encfs.c
 		$(CC) $(CFLAGS) $(CFLAGSFUSE) $<
