@@ -89,7 +89,7 @@ char *get_mirror_path(const char *path) {
 static int xmp_getattr(const char *path, struct stat *stbuf) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_getattr: %s\n",mpath);
+    //printf("xmp_getattr: %s\n",mpath);
     res = lstat(mpath, stbuf);
     if (res == -1)
         return -errno;
@@ -101,7 +101,7 @@ static int xmp_getattr(const char *path, struct stat *stbuf) {
 static int xmp_access(const char *path, int mask) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_access: %s\n",mpath);
+    //printf("xmp_access: %s\n",mpath);
     res = access(mpath, mask);
     if (res == -1)
         return -errno;
@@ -113,7 +113,7 @@ static int xmp_access(const char *path, int mask) {
 static int xmp_readlink(const char *path, char *buf, size_t size) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_readlink: %s\n",mpath);
+    //printf("xmp_readlink: %s\n",mpath);
     res = readlink(mpath, buf, size - 1);
     if (res == -1)
         return -errno;
@@ -132,7 +132,7 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     (void) fi;
 
     char* mpath = get_mirror_path(path);
-    printf("xmp_readdir: %s\n",mpath);
+    //printf("xmp_readdir: %s\n",mpath);
     dp = opendir(mpath);
     if (dp == NULL)
         return -errno;
@@ -154,7 +154,7 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int xmp_mknod(const char *path, mode_t mode, dev_t rdev) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_mknod: %s\n",mpath);
+    //printf("xmp_mknod: %s\n",mpath);
     /* On Linux this could just be 'mknod(path, mode, rdev)' but this
        is more portable */
     if (S_ISREG(mode)) {
@@ -174,7 +174,7 @@ static int xmp_mknod(const char *path, mode_t mode, dev_t rdev) {
 static int xmp_mkdir(const char *path, mode_t mode) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_mkdir: %s\n",mpath);
+    //printf("xmp_mkdir: %s\n",mpath);
     res = mkdir(mpath, mode);
     if (res == -1)
         return -errno;
@@ -186,7 +186,7 @@ static int xmp_mkdir(const char *path, mode_t mode) {
 static int xmp_unlink(const char *path) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_unlink: %s\n",mpath);
+    //printf("xmp_unlink: %s\n",mpath);
     res = unlink(mpath);
     if (res == -1)
         return -errno;
@@ -198,7 +198,7 @@ static int xmp_unlink(const char *path) {
 static int xmp_rmdir(const char *path) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_rmdir: %s\n",mpath);
+    //printf("xmp_rmdir: %s\n",mpath);
     res = rmdir(mpath);
     if (res == -1)
         return -errno;
@@ -210,9 +210,9 @@ static int xmp_rmdir(const char *path) {
 static int xmp_symlink(const char *from, const char *to) {
     int res;
     char* mfrom = get_mirror_path(from);
-    printf("xmp_symlink (from): %s\n",mfrom);
+    //printf("xmp_symlink (from): %s\n",mfrom);
     char* mto = get_mirror_path(to);
-    printf("xmp_symlink (to): %s\n",mto);
+    //printf("xmp_symlink (to): %s\n",mto);
     res = symlink(mfrom, mto);
     if (res == -1)
         return -errno;
@@ -225,9 +225,9 @@ static int xmp_symlink(const char *from, const char *to) {
 static int xmp_rename(const char *from, const char *to) {
     int res;
     char* mfrom = get_mirror_path(from);
-    printf("xmp_symlink (from): %s\n",mfrom);
+    //printf("xmp_symlink (from): %s\n",mfrom);
     char* mto = get_mirror_path(to);
-    printf("xmp_symlink (to): %s\n",mto);
+    //printf("xmp_symlink (to): %s\n",mto);
     res = rename(from, to);
     if (res == -1)
         return -errno;
@@ -240,9 +240,9 @@ static int xmp_rename(const char *from, const char *to) {
 static int xmp_link(const char *from, const char *to) {
     int res;
     char* mfrom = get_mirror_path(from);
-    printf("xmp_symlink (from): %s\n",mfrom);
+    //printf("xmp_symlink (from): %s\n",mfrom);
     char* mto = get_mirror_path(to);
-    printf("xmp_symlink (to): %s\n",mto);
+    //printf("xmp_symlink (to): %s\n",mto);
     res = link(from, to);
     if (res == -1)
         return -errno;
@@ -255,7 +255,7 @@ static int xmp_link(const char *from, const char *to) {
 static int xmp_chmod(const char *path, mode_t mode) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_chmod: %s\n",mpath);
+    //printf("xmp_chmod: %s\n",mpath);
     res = chmod(mpath, mode);
     if (res == -1)
         return -errno;
@@ -267,7 +267,7 @@ static int xmp_chmod(const char *path, mode_t mode) {
 static int xmp_chown(const char *path, uid_t uid, gid_t gid) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_chown: %s\n",mpath);
+    //printf("xmp_chown: %s\n",mpath);
     res = lchown(mpath, uid, gid);
     if (res == -1)
         return -errno;
@@ -279,7 +279,7 @@ static int xmp_chown(const char *path, uid_t uid, gid_t gid) {
 static int xmp_truncate(const char *path, off_t size) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_truncate: %s\n",mpath);
+    //printf("xmp_truncate: %s\n",mpath);
     res = truncate(mpath, size);
     if (res == -1)
         return -errno;
@@ -297,7 +297,7 @@ static int xmp_utimens(const char *path, const struct timespec ts[2]) {
     tv[1].tv_sec = ts[1].tv_sec;
     tv[1].tv_usec = ts[1].tv_nsec / 1000;
     char* mpath = get_mirror_path(path);
-    printf("xmp_utimens: %s\n",mpath);
+    //printf("xmp_utimens: %s\n",mpath);
     res = utimes(mpath, tv);
     if (res == -1)
         return -errno;
@@ -309,7 +309,7 @@ static int xmp_utimens(const char *path, const struct timespec ts[2]) {
 static int xmp_open(const char *path, struct fuse_file_info *fi) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_open: %s\n",mpath);
+    //printf("xmp_open: %s\n",mpath);
     res = open(mpath, fi->flags);
     if (res == -1)
         return -errno;
@@ -325,7 +325,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
     int res;
     // Get the actual path
     char* mpath = get_mirror_path(path);
-    printf("xmp_read: %s\n",mpath);
+    fprintf(stderr, "xmp_read: %s\n",mpath);
     // Open the file we are reading from
     FILE *fp = fopen(mpath,"r");
     if (NULL == fp) {
@@ -340,13 +340,19 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
     }
     // Decrypt if necessary
     if (1) { // File is encrypted
+		fprintf(stderr, "xmp_read: File is encrypted, decrypting to temp\n");
         // Decrypt the file to a tempfile
         if (FAILURE == do_crypt(fp, tp, 0, FUSE_DATA->key_phrase)) {
             fprintf(stderr, "xmp_read: Failed to decrypt %s\n",mpath);
             return -errno;
         }
     } else { // File is not encrypted
-
+		fprintf(stderr, "xmp_read: File is not encrypted, passthrough to temp\n");
+        // Passthrough the file to a tempfile
+        if (FAILURE == do_crypt(fp, tp, -1, FUSE_DATA->key_phrase)) {
+            fprintf(stderr, "xmp_read: Failed to passthrough %s\n",mpath);
+            return -errno;
+        }
     }
     // Read the decrypted file
     fflush(tp);
@@ -368,7 +374,7 @@ static int xmp_write(const char *path, const char *buf, size_t size,
     int res;
     // Get the actual path
     char* mpath = get_mirror_path(path);
-    printf("xmp_write: %s\n",mpath);
+    fprintf(stderr, "xmp_write: %s\n",mpath);
     // Open the file we are writing to
     FILE *fp = fopen(mpath, "r+");
     if (NULL == fp) {
@@ -385,6 +391,7 @@ static int xmp_write(const char *path, const char *buf, size_t size,
     // Decrypt if necessary (see https://www.cs.nmsu.edu/~pfeiffer/fuse-tutorial/))
     if (size > 0) {
         if (1) { // File is encrypted
+			fprintf(stderr, "xmp_write: File is encrypted, decrypting to temp\n");
             // Decrypt the file to a tempfile
             if (FAILURE == do_crypt(fp, tp, 0, FUSE_DATA->key_phrase)) {
                 fprintf(stderr, "xmp_write: Failed to decrypt %s\n",mpath);
@@ -393,7 +400,14 @@ static int xmp_write(const char *path, const char *buf, size_t size,
             rewind(fp);
             rewind(tp);
         } else { // File is not encrypted
-
+			fprintf(stderr, "xmp_write: File is not encrypted, do_crypt passthrough\n");
+			// Passthrough the file to a tempfile
+            if (FAILURE == do_crypt(fp, tp, -1, FUSE_DATA->key_phrase)) {
+                fprintf(stderr, "xmp_write: Failed to passthrough %s\n",mpath);
+                return -errno;
+            }
+            rewind(fp);
+            rewind(tp);
         }
     }
     // Do the write
@@ -402,13 +416,19 @@ static int xmp_write(const char *path, const char *buf, size_t size,
         res = -errno;
     // Encrypt if necessary
     if (1) { // File is encrypted
+		fprintf(stderr, "xmp_write: File was encrypted, re-encrypting from temp\n");
         // Encrypt the temp file to the actual file
         if (FAILURE == do_crypt(tp, fp, 1, FUSE_DATA->key_phrase)) {
             fprintf(stderr, "xmp_write: Failed to encrypt %s\n",mpath);
             return -errno;
         }
-    } else {
-
+    } else { // File is not encrypted
+		fprintf(stderr, "xmp_write: File was not encrypted, do_crypt passthrough\n");
+		// Passthrough the tempfile to file
+		if (FAILURE == do_crypt(tp, fp, -1, FUSE_DATA->key_phrase)) {
+            fprintf(stderr, "xmp_write: Failed to passthrough %s\n",mpath);
+            return -errno;
+        }
     }
     // Clean up
     fclose(fp);
@@ -420,7 +440,7 @@ static int xmp_write(const char *path, const char *buf, size_t size,
 static int xmp_statfs(const char *path, struct statvfs *stbuf) {
     int res;
     char* mpath = get_mirror_path(path);
-    printf("xmp_statfs: %s\n",mpath);
+    //printf("xmp_statfs: %s\n",mpath);
     res = statvfs(mpath, stbuf);
     if (res == -1)
         return -errno;
@@ -434,7 +454,7 @@ static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) 
     (void) mode;
     // Get the actual path
     char* mpath = get_mirror_path(path);
-    printf("xmp_create: %s\n",mpath);
+    fprintf(stderr, "xmp_create: %s\n",mpath);
     // Create encrypted file
     FILE *fp = fopen(mpath,"wb+");
     if (FAILURE == do_crypt(fp, fp, 1, FUSE_DATA->key_phrase)) {
@@ -442,6 +462,7 @@ static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) 
         return -errno;
     }
     fprintf(stderr, "xmp_create: Encrypted %s\n",mpath);
+	// Clean up
     fclose(fp);
     free(mpath);
     return 0;
@@ -468,7 +489,7 @@ static int xmp_fsync(const char *path, int isdatasync,
 static int xmp_setxattr(const char *path, const char *name, const char *value,
             size_t size, int flags) {
     char* mpath = get_mirror_path(path);
-    printf("xmp_setxattr: %s\n",mpath);
+    fprintf(stderr, "xmp_setxattr: %s\n",mpath);
     int res = lsetxattr(mpath, name, value, size, flags);
     if (res == -1)
         return -errno;
@@ -479,7 +500,7 @@ static int xmp_setxattr(const char *path, const char *name, const char *value,
 static int xmp_getxattr(const char *path, const char *name, char *value,
             size_t size) {
     char* mpath = get_mirror_path(path);
-    printf("xmp_getxattr: %s\n",mpath);
+    fprintf(stderr, "xmp_getxattr: %s\n",mpath);
     int res = lgetxattr(mpath, name, value, size);
     if (res == -1)
         return -errno;
@@ -489,7 +510,7 @@ static int xmp_getxattr(const char *path, const char *name, char *value,
 
 static int xmp_listxattr(const char *path, char *list, size_t size) {
     char* mpath = get_mirror_path(path);
-    printf("xmp_listxattr: %s\n",mpath);
+    fprintf(stderr, "xmp_listxattr: %s\n",mpath);
     int res = llistxattr(mpath, list, size);
     if (res == -1)
         return -errno;
@@ -499,7 +520,7 @@ static int xmp_listxattr(const char *path, char *list, size_t size) {
 
 static int xmp_removexattr(const char *path, const char *name) {
     char* mpath = get_mirror_path(path);
-    printf("xmp_removexattr: %s\n",mpath);
+    fprintf(stderr, "xmp_removexattr: %s\n",mpath);
     int res = lremovexattr(mpath, name);
     if (res == -1)
         return -errno;
@@ -551,7 +572,7 @@ int main(int argc, char *argv[]) {
     struct fuse_data *fuse_data;
     fuse_data = malloc(sizeof(struct fuse_data));
     if (fuse_data == NULL) {
-        printf("Failed to allocate memory. Exiting.\n");
+        fprintf(stderr, "Failed to allocate memory. Exiting.\n");
         return 1;
     }
     // Yank mirror directory (from J. J. Pfeiffer, https://www.cs.nmsu.edu/~pfeiffer/fuse-tutorial/)
@@ -562,7 +583,7 @@ int main(int argc, char *argv[]) {
         --argc;
     } else {
         perror("realpath");
-        printf(ANSI_C_RED "You lied to me when you told me this was a directory.\n" ANSI_RESET);
+        fprintf(stderr, ANSI_C_RED "You lied to me when you told me this was a directory.\n" ANSI_RESET);
         return 1;
     }
     // Yank key phrase
