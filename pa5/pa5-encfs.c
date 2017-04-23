@@ -47,6 +47,7 @@
 #ifdef HAVE_SETXATTR
 #include <sys/xattr.h>
 #endif
+#include "aes-crypt.h"
 
 /* Struct to store custom data across fuse calls */
 struct fuse_data {
@@ -55,6 +56,8 @@ struct fuse_data {
 };
 /* Macro to get fuse data */
 #define FUSE_DATA ((struct fuse_data*) fuse_get_context()->private_data)
+/* XATTR name */
+#define XATTR_ENCRYPTED "user.pa5-encfs.encrypted"
 
 // ANSI colour escapes
 #define ANSI_C_BLACK        "\x1b[1;30m"
@@ -318,41 +321,100 @@ static int xmp_open(const char *path, struct fuse_file_info *fi) {
 
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
             struct fuse_file_info *fi) {
-    printf("xmp_read: %s\n",path);
+    (void) fi;
     int fd;
     int res;
+    // Get the actual path
     char* mpath = get_mirror_path(path);
     printf("xmp_read: %s\n",mpath);
-    (void) fi;
-    fd = open(mpath, O_RDONLY);
-    if (fd == -1)
+    // Open the file we are reading from
+    FILE *fp = fopen(mpath,"r");
+    if (NULL == fp) {
+        fprintf(stderr, "xmp_read: Failed to open %s\n",mpath);
         return -errno;
+    }
+    // Get a temp file for decryption
+    FILE *tp = tmpfile();
+    if (NULL == tp) {
+        fprintf(stderr, "xmp_read: Failed to open temp file\n");
+        return -errno;
+    }
+    // Decrypt if necessary
+    if (1) { // File is encrypted
+        // Decrypt the file to a tempfile
+        if (FAILURE == do_crypt(fp, tp, 0, FUSE_DATA->key_phrase)) {
+            fprintf(stderr, "xmp_read: Failed to decrypt %s\n",mpath);
+            return -errno;
+        }
+    } else { // File is not encrypted
 
-    res = pread(fd, buf, size, offset);
-    if (res == -1)
+    }
+    // Read the decrypted file
+    fflush(tp);
+    fseek(tp, offset, SEEK_SET);
+    res = fread(buf, 1, size, tp);
+    if (res == -1) {
         res = -errno;
-
-    close(fd);
+    }
+    // Clean up
+    fclose(fp);
+    fclose(tp);
     free(mpath);
     return res;
 }
 
 static int xmp_write(const char *path, const char *buf, size_t size,
              off_t offset, struct fuse_file_info *fi) {
+    (void) fi;
     int fd;
     int res;
+    // Get the actual path
     char* mpath = get_mirror_path(path);
     printf("xmp_write: %s\n",mpath);
-    (void) fi;
-    fd = open(mpath, O_WRONLY);
-    if (fd == -1)
+    // Open the file we are writing to
+    FILE *fp = fopen(mpath, "r+");
+    if (NULL == fp) {
+        fprintf(stderr, "xmp_write: Failed to open %s\n",mpath);
         return -errno;
+    }
+    // Get a temp file for decryption
+    FILE *tp = tmpfile();
+    int tp_descriptor = fileno(tp); // need the descriptor for writing
+    if (NULL == tp) {
+        fprintf(stderr, "xmp_write: Failed to open temp file\n");
+        return -errno;
+    }
+    // Decrypt if necessary (see https://www.cs.nmsu.edu/~pfeiffer/fuse-tutorial/))
+    if (size > 0) {
+        if (1) { // File is encrypted
+            // Decrypt the file to a tempfile
+            if (FAILURE == do_crypt(fp, tp, 0, FUSE_DATA->key_phrase)) {
+                fprintf(stderr, "xmp_write: Failed to decrypt %s\n",mpath);
+                return -errno;
+            }
+            rewind(file);
+            rewind(tempfile);
+        } else { // File is not encrypted
 
-    res = pwrite(fd, buf, size, offset);
+        }
+    }
+    // Do the write
+    res = pwrite(tp_descriptor, buf, size, offset);
     if (res == -1)
         res = -errno;
+    // Encrypt if necessary
+    if (1) { // File is encrypted
+        // Encrypt the temp file to the actual file
+        if (FAILURE == do_crypt(tp, fp, 1, FUSE_DATA->key_phrase)) {
+            fprintf(stderr, "xmp_write: Failed to encrypt %s\n",mpath);
+            return -errno;
+        }
+    } else {
 
-    close(fd);
+    }
+    // Clean up
+    fclose(fp);
+    fclose(td);
     free(mpath);
     return res;
 }
@@ -371,14 +433,17 @@ static int xmp_statfs(const char *path, struct statvfs *stbuf) {
 
 static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) {
     (void) fi;
-    int res;
+    // Get the actual path
     char* mpath = get_mirror_path(path);
     printf("xmp_create: %s\n",mpath);
-    res = creat(mpath, mode);
-    if(res == -1)
-    return -errno;
-
-    close(res);
+    // Create encrypted file
+    FILE *fp = fopen(mpath,"wb+");
+    if (FAILURE == do_crypt(fp, fp, 1, FUSE_DATA->key_phrase)) {
+        fprintf(stderr, "xmp_create: Failed to encrypt %s\n",mpath);
+        return -errno;
+    }
+    fprintf(stderr, "xmp_create: Encrypted %s\n",mpath);
+    fclose(fp);
     free(mpath);
     return 0;
 }
