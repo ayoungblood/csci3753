@@ -449,7 +449,7 @@ static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) 
     fprintf(stderr, "xmp_create: Encrypted %s\n",mpath);
     // Add xattr
     if (-1 == setxattr(mpath, XATTR_ENCRYPTED, "true ", 6, 0)){
-        fprintf(stderr, "xmp_create: Failed to set xattr % on %s\n", XATTR_ENCRYPTED, mpath);
+        fprintf(stderr, "xmp_create: Failed to set xattr %s on %s\n", XATTR_ENCRYPTED, mpath);
         return -errno;
     }
     fprintf(stderr, "xmp_create: Set xattr %s on %s\n", XATTR_ENCRYPTED, mpath);
