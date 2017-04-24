@@ -323,6 +323,12 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
         fprintf(stderr, "xmp_read: Failed to open temp file\n");
         return -errno;
     }
+	// Check the xattr
+	// (from https://www.cocoanetics.com/2012/03/reading-and-writing-extended-file-attributes/)
+	int xattr_size = getxattr(mpath, XATTR_ENCRYPTED, NULL, 0); // get size in bytes of xattr
+	char *xattr_buf = malloc(xattr_size);
+	getxattr(mpath, XATTR_ENCRYPTED, xattr_buff, xattr_size);
+	printf("xmp_read: xattr %s is %s\n", XATTR_ENCRYPTED, xattr_buff)
     // Decrypt if necessary
     if (1) { // File is encrypted
         fprintf(stderr, "xmp_read: File is encrypted, decrypting to temp\n");
@@ -350,6 +356,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
     fclose(fp);
     fclose(tp);
     free(mpath);
+	free(xattr_buf);
     return res;
 }
 
