@@ -323,21 +323,22 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
         fprintf(stderr, "xmp_read: Failed to open temp file\n");
         return -errno;
     }
-	// Check the xattr
-	// (from https://www.cocoanetics.com/2012/03/reading-and-writing-extended-file-attributes/)
- 	char is_encrypted = 0; // bool is overrated
-	// getxattr returns size in bytes if the xattr exists and -1 if not
-	int xattr_size = getxattr(mpath, XATTR_ENCRYPTED, NULL, 0);
-	printf("xmp_read: xattr %s has size %d\n",XATTR_ENCRYPTED,xattr_size);
-	if (xattr_size > 0) {
-		char *xattr_buf = malloc(xattr_size);
-		getxattr(mpath, XATTR_ENCRYPTED, xattr_buf, xattr_size);
-		printf("xmp_read: xattr %s is %s\n", XATTR_ENCRYPTED, xattr_buf);
-		if (!strncmp(xattr_buf,"true",4)) {
-			is_encrypted = 1;
-		}
-	}
-	printf("xmp_read: From xattr %s, file is %s\n",XATTR_ENCRYPTED,is_encrypted?"true":"false");
+    // Check the xattr
+    // (from https://www.cocoanetics.com/2012/03/reading-and-writing-extended-file-attributes/)
+     char is_encrypted = 0; // bool is overrated
+    // getxattr returns size in bytes if the xattr exists and -1 if not
+    int xattr_size = getxattr(mpath, XATTR_ENCRYPTED, NULL, 0);
+    printf("xmp_read: xattr %s has size %d\n",XATTR_ENCRYPTED,xattr_size);
+    if (xattr_size > 0) {
+        char *xattr_buf = malloc(xattr_size);
+        getxattr(mpath, XATTR_ENCRYPTED, xattr_buf, xattr_size);
+        printf("xmp_read: xattr %s is %s\n", XATTR_ENCRYPTED, xattr_buf);
+        if (!strncmp(xattr_buf,"true",4)) {
+            is_encrypted = 1;
+        }
+        free(xattr_buf);
+    }
+    printf("xmp_read: From xattr %s, file is %s\n",XATTR_ENCRYPTED,is_encrypted?"true":"false");
     // Decrypt if necessary
     if (is_encrypted) { // File is encrypted
         fprintf(stderr, "xmp_read: File is encrypted, decrypting to temp\n");
@@ -365,7 +366,6 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
     fclose(fp);
     fclose(tp);
     free(mpath);
-	free(xattr_buf);
     return res;
 }
 
