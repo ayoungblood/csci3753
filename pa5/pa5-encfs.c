@@ -325,17 +325,21 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
     }
 	// Check the xattr
 	// (from https://www.cocoanetics.com/2012/03/reading-and-writing-extended-file-attributes/)
-	int xattr_size = getxattr(mpath, XATTR_ENCRYPTED, NULL, 0); // get size in bytes of xattr
-	char *xattr_buf = malloc(xattr_size);
-	getxattr(mpath, XATTR_ENCRYPTED, xattr_buf, xattr_size);
-	printf("xmp_read: xattr %s is %s\n", XATTR_ENCRYPTED, xattr_buf);
-	if (!strncmp(xattr_buf,"true",4)) {
-		printf("xmp_read: strncmp thinks file is encrypted\n");
-	} else {
-		printf("xmp_read: strncmp thinks file is not encrypted\n");
+ 	char is_encrypted = 0; // bool is overrated
+	// getxattr returns size in bytes if the xattr exists and -1 if not
+	int xattr_size = getxattr(mpath, XATTR_ENCRYPTED, NULL, 0);
+	printf("xmp_read: xattr %s has size %d\n",XATTR_ENCRYPTED,xattr_size);
+	if (xattr_size > 0) {
+		char *xattr_buf = malloc(xattr_size);
+		getxattr(mpath, XATTR_ENCRYPTED, xattr_buf, xattr_size);
+		printf("xmp_read: xattr %s is %s\n", XATTR_ENCRYPTED, xattr_buf);
+		if (!strncmp(xattr_buf,"true",4)) {
+			is_encrypted = 1;
+		}
 	}
+	printf("xmp_read: From xattr %s, file is %s\n",XATTR_ENCRYPTED,is_encrypted?"true":"false");
     // Decrypt if necessary
-    if (1) { // File is encrypted
+    if (is_encrypted) { // File is encrypted
         fprintf(stderr, "xmp_read: File is encrypted, decrypting to temp\n");
         // Decrypt the file to a tempfile
         if (FAILURE == do_crypt(fp, tp, 0, FUSE_DATA->key_phrase)) {
