@@ -327,8 +327,13 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 	// (from https://www.cocoanetics.com/2012/03/reading-and-writing-extended-file-attributes/)
 	int xattr_size = getxattr(mpath, XATTR_ENCRYPTED, NULL, 0); // get size in bytes of xattr
 	char *xattr_buf = malloc(xattr_size);
-	getxattr(mpath, XATTR_ENCRYPTED, xattr_buff, xattr_size);
-	printf("xmp_read: xattr %s is %s\n", XATTR_ENCRYPTED, xattr_buff)
+	getxattr(mpath, XATTR_ENCRYPTED, xattr_buf, xattr_size);
+	printf("xmp_read: xattr %s is %s\n", XATTR_ENCRYPTED, xattr_buf);
+	if (!strncmp(xattr_buf,"true",4)) {
+		printf("xmp_read: strncmp thinks file is encrypted\n");
+	} else {
+		printf("xmp_read: strncmp thinks file is not encrypted\n");
+	}
     // Decrypt if necessary
     if (1) { // File is encrypted
         fprintf(stderr, "xmp_read: File is encrypted, decrypting to temp\n");
