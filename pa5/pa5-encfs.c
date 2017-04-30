@@ -62,9 +62,11 @@ struct fuse_data {
 /* Takes a path and transforms it based on the mirror directory */
 char *get_mirror_path(const char *path) {
     char *rv;
+    // Malloc space for mirror path (combined path). Needs to be freed later!
     int slen = strlen(path) + strlen(FUSE_DATA->mirror_directory) + 1;
     rv = malloc(sizeof(char) * slen);
     if (rv == NULL) return NULL;
+    // Mirror path is mirror directory concatenated with mount-relative path
     strncpy(rv, FUSE_DATA->mirror_directory, slen);
     strncat(rv, path, slen);
     //printf("get_mirror_path: %s\n",rv);
@@ -333,6 +335,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
         char *xattr_buf = malloc(xattr_size);
         getxattr(mpath, XATTR_ENCRYPTED, xattr_buf, xattr_size);
         printf("xmp_read: xattr %s is %s\n", XATTR_ENCRYPTED, xattr_buf);
+        // file is encrypted only if xattr exists and is "true"
         if (!strncmp(xattr_buf,"true",4)) {
             is_encrypted = 1;
         }
@@ -399,6 +402,7 @@ static int xmp_write(const char *path, const char *buf, size_t size,
         char *xattr_buf = malloc(xattr_size);
         getxattr(mpath, XATTR_ENCRYPTED, xattr_buf, xattr_size);
         printf("xmp_read: xattr %s is %s\n", XATTR_ENCRYPTED, xattr_buf);
+        // file is encrypted only if xattr exists and is "true"
         if (!strncmp(xattr_buf,"true",4)) {
             is_encrypted = 1;
         }
@@ -423,6 +427,7 @@ static int xmp_write(const char *path, const char *buf, size_t size,
                 fprintf(stderr, "xmp_write: Failed to passthrough %s\n",mpath);
                 return -errno;
             }
+            // Reset so we write to the correct place
             rewind(fp);
             rewind(tp);
         }
@@ -553,32 +558,32 @@ static int xmp_removexattr(const char *path, const char *name) {
 #endif /* HAVE_SETXATTR */
 
 static struct fuse_operations xmp_oper = {
-    .getattr    = xmp_getattr,
-    .access        = xmp_access,
-    .readlink    = xmp_readlink,
-    .readdir    = xmp_readdir,
-    .mknod        = xmp_mknod,
-    .mkdir        = xmp_mkdir,
-    .symlink    = xmp_symlink,
-    .unlink        = xmp_unlink,
-    .rmdir        = xmp_rmdir,
-    .rename        = xmp_rename,
-    .link        = xmp_link,
-    .chmod        = xmp_chmod,
-    .chown        = xmp_chown,
-    .truncate    = xmp_truncate,
-    .utimens    = xmp_utimens,
-    .open        = xmp_open,
-    .read        = xmp_read,
-    .write        = xmp_write,
-    .statfs        = xmp_statfs,
+    .getattr        = xmp_getattr,
+    .access         = xmp_access,
+    .readlink       = xmp_readlink,
+    .readdir        = xmp_readdir,
+    .mknod          = xmp_mknod,
+    .mkdir          = xmp_mkdir,
+    .symlink        = xmp_symlink,
+    .unlink         = xmp_unlink,
+    .rmdir          = xmp_rmdir,
+    .rename         = xmp_rename,
+    .link           = xmp_link,
+    .chmod          = xmp_chmod,
+    .chown          = xmp_chown,
+    .truncate       = xmp_truncate,
+    .utimens        = xmp_utimens,
+    .open           = xmp_open,
+    .read           = xmp_read,
+    .write          = xmp_write,
+    .statfs         = xmp_statfs,
     .create         = xmp_create,
-    .release    = xmp_release,
-    .fsync        = xmp_fsync,
+    .release        = xmp_release,
+    .fsync          = xmp_fsync,
 #ifdef HAVE_SETXATTR
-    .setxattr    = xmp_setxattr,
-    .getxattr    = xmp_getxattr,
-    .listxattr    = xmp_listxattr,
+    .setxattr       = xmp_setxattr,
+    .getxattr       = xmp_getxattr,
+    .listxattr      = xmp_listxattr,
     .removexattr    = xmp_removexattr,
 #endif
 };
